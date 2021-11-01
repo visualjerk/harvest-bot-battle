@@ -13,45 +13,11 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   key: 'Game',
 }
 
-class FieldGridCell {
-  column: number
-  row: number
-  x: number
-  y: number
-  centerX: number
-  centerY: number
-
-  constructor(column: number, row: number, size: number) {
-    this.row = row
-    this.column = column
-    this.x = column * size
-    this.y = row * size
-    this.centerX = this.x - size / 2
-    this.centerY = this.y - size / 2
-  }
-}
-
-class FieldGrid {
-  cells: FieldGridCell[] = []
-  size: number
-
-  constructor(columns: number, rows: number, size: number) {
-    for (let row = 0; row < rows; row++) {
-      for (let column = 0; column < columns; column++) {
-        this.cells.push(new FieldGridCell(column, row, size))
-      }
-    }
-    this.size = size
-  }
-}
-
 class GameScene extends Phaser.Scene {
   private bot: Phaser.Physics.Arcade.Image | null = null
   private botTarget: Phaser.Math.Vector2 | null = null
-  private botMoving: boolean = false
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null
-  private fieldGrid: FieldGrid | null = null
-  private minerals: Phaser.Physics.Arcade.Image[] = []
+  private minerals: Phaser.Physics.Arcade.StaticGroup | null = null
 
   constructor() {
     super(sceneConfig)
@@ -64,9 +30,6 @@ class GameScene extends Phaser.Scene {
   }
 
   create() {
-    const fieldCount = SIZE / CELL
-    this.fieldGrid = new FieldGrid(fieldCount, fieldCount, CELL)
-
     this.cameras.main.setBounds(0, 0, SIZE, SIZE)
     this.physics.world.setBounds(0, 0, SIZE, SIZE)
     this.physics.add.staticImage(CENTER, CENTER, 'map')
@@ -97,17 +60,39 @@ class GameScene extends Phaser.Scene {
     this.botTarget = new Phaser.Math.Vector2()
     this.botTarget.x = this.bot.x
     this.botTarget.y = this.bot.y
+
+    if (this.minerals != null) {
+      this.physics.add.overlap(
+        this.bot,
+        this.minerals,
+        this.botHitMineralPatch.bind(this)
+      )
+    }
   }
 
   spawnMinerals() {
-    this.fieldGrid?.cells.forEach((cell) => {
-      if (Math.random() < 0.05) {
-        const mineral = this.physics.add
-          .image(cell.centerX, cell.centerY, 'minerals')
-          .setScale(IMAGE_SCALE)
-        this.minerals.push(mineral)
-      }
+    this.minerals = this.physics.add.staticGroup({
+      key: 'minerals',
+      frameQuantity: 50,
     })
+    this.minerals.children.each((mineralPatch) => {
+      const x = Phaser.Math.Between(0, SIZE / CELL) * CELL + CELL / 2
+      const y = Phaser.Math.Between(0, SIZE / CELL) * CELL + CELL / 2
+
+      mineralPatch
+        .setPosition(x, y)
+        .setScale(IMAGE_SCALE)
+        .setBodySize(CELL / 4, CELL / 4, true)
+    })
+    this.minerals.refresh()
+  }
+
+  botHitMineralPatch(
+    bot: Phaser.GameObjects.GameObject,
+    mineralPatch: Phaser.GameObjects.GameObject
+  ) {
+    this.minerals?.killAndHide(mineralPatch)
+    mineralPatch.body.enable = false
   }
 
   update() {
@@ -144,7 +129,7 @@ class GameScene extends Phaser.Scene {
       this.bot.setRotation(Math.PI * 1.5)
     }
 
-    this.physics.moveToObject(this.bot, this.botTarget, CELL)
+    this.physics.moveToObject(this.bot, this.botTarget, CELL * 2)
   }
 }
 
@@ -159,6 +144,9 @@ class Game {
       height: 600,
       physics: {
         default: 'arcade',
+        arcade: {
+          debug: true,
+        },
       },
       scene: new GameScene(),
     })
