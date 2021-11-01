@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, onMounted, ref, Ref } from 'vue'
+import { defineComponent, onMounted, ref } from 'vue'
 import Phaser from 'phaser'
 
 const SIZE = 2048
@@ -191,6 +191,13 @@ export default defineComponent({
 </script>
 
 <template>
-  <h1>Minerals harvested: {{ score }}</h1>
-  <canvas ref="canvasRef" />
+  <div class="flex h-screen items-center justify-center bg-gray-900">
+    <div>
+      <canvas ref="canvasRef" class="border-4 border-gray-200 mb-2" />
+      <h1 class="text-blue-300 text-lg">
+        Minerals harvested:
+        <span class="font-bold text-blue-200">{{ score }}</span>
+      </h1>
+    </div>
+  </div>
 </template>
