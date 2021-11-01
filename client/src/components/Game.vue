@@ -2,6 +2,9 @@
 import { defineComponent, onMounted, ref } from 'vue'
 import Phaser from 'phaser'
 
+const SIZE = 2048
+const CENTER = SIZE / 2
+
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
   visible: false,
@@ -10,6 +13,7 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
 
 class GameScene extends Phaser.Scene {
   private bot: Phaser.Physics.Arcade.Image | null = null
+  private cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null
 
   constructor() {
     super(sceneConfig)
@@ -21,15 +25,45 @@ class GameScene extends Phaser.Scene {
   }
 
   create() {
-    // const { width, height } = this.sys.game.config
-    this.physics.add.staticImage(0, 0, 'map')
-    this.bot = this.physics.add.image(400, 300, 'harvest-bot')
+    this.cameras.main.setBounds(0, 0, SIZE, SIZE)
+    this.physics.world.setBounds(0, 0, SIZE, SIZE)
+    this.physics.add.staticImage(CENTER, CENTER, 'map')
+
+    this.cursors = this.input.keyboard.createCursorKeys()
+
+    const gridCellSize = SIZE / 30
+    this.add.grid(
+      CENTER,
+      CENTER,
+      SIZE,
+      SIZE,
+      gridCellSize,
+      gridCellSize,
+      undefined,
+      0,
+      0xffffff
+    )
+
+    this.bot = this.physics.add.image(CENTER, CENTER, 'harvest-bot')
+    this.bot.setCollideWorldBounds(true)
+    this.cameras.main.startFollow(this.bot)
     // Create minerals
   }
 
   update() {
-    // this.bot?.setAngularVelocity(50)
-    // const cursorKeys = this.input.keyboard.createCursorKeys()
+    this.bot?.setVelocity(0)
+
+    if (this.cursors?.up.isDown) {
+      this.bot?.setVelocityY(-200)
+    } else if (this.cursors?.down.isDown) {
+      this.bot?.setVelocityY(200)
+    }
+
+    if (this.cursors?.right.isDown) {
+      this.bot?.setVelocityX(200)
+    } else if (this.cursors?.left.isDown) {
+      this.bot?.setVelocityX(-200)
+    }
   }
 }
 
