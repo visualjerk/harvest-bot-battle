@@ -2,6 +2,8 @@
 import Metric from './Metric.vue'
 import { defineComponent, onMounted, ref } from 'vue'
 import Phaser from 'phaser'
+import { handleTurn } from '../test-bot-ai'
+import { MoveDirection } from '../types'
 
 const SIZE = 2048
 const CELL = 64
@@ -128,19 +130,24 @@ class GameScene extends Phaser.Scene {
       return
     }
 
-    if (this.cursors?.up.isDown) {
+    const direction = handleTurn()
+
+    if (this.cursors?.up.isDown || direction === MoveDirection.up) {
       this.botTarget.y -= CELL
       this.bot.setRotation(0)
       this.emitter.emit(GameEvent.incrementMoves)
-    } else if (this.cursors?.down.isDown) {
+    } else if (this.cursors?.down.isDown || direction === MoveDirection.down) {
       this.botTarget.y += CELL
       this.bot.setRotation(Math.PI)
       this.emitter.emit(GameEvent.incrementMoves)
-    } else if (this.cursors?.right.isDown) {
+    } else if (
+      this.cursors?.right.isDown ||
+      direction === MoveDirection.right
+    ) {
       this.botTarget.x += CELL
       this.bot.setRotation(Math.PI * 0.5)
       this.emitter.emit(GameEvent.incrementMoves)
-    } else if (this.cursors?.left.isDown) {
+    } else if (this.cursors?.left.isDown || direction === MoveDirection.left) {
       this.botTarget.x -= CELL
       this.bot.setRotation(Math.PI * 1.5)
       this.emitter.emit(GameEvent.incrementMoves)
