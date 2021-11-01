@@ -1,11 +1,15 @@
 <script lang="ts">
-import { defineComponent, onMounted, ref } from 'vue'
+import { defineComponent, onMounted, ref, Ref } from 'vue'
 import Phaser from 'phaser'
 
 const SIZE = 2048
 const CELL = 64
 const CENTER = SIZE / 2
 const IMAGE_SCALE = 0.5
+
+enum GameEvent {
+  incrementScore = 'incrementScore',
+}
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -18,9 +22,12 @@ class GameScene extends Phaser.Scene {
   private botTarget: Phaser.Math.Vector2 | null = null
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null
   private minerals: Phaser.Physics.Arcade.StaticGroup | null = null
+  private emitter
 
-  constructor() {
+  constructor(emitter) {
     super(sceneConfig)
+
+    this.emitter = emitter
   }
 
   preload() {
@@ -93,6 +100,7 @@ class GameScene extends Phaser.Scene {
   ) {
     this.minerals?.killAndHide(mineralPatch)
     mineralPatch.body.enable = false
+    this.emitter.emit(GameEvent.incrementScore)
   }
 
   update() {
@@ -136,7 +144,10 @@ class GameScene extends Phaser.Scene {
 class Game {
   game: Phaser.Game
 
-  constructor(canvasEl: HTMLCanvasElement) {
+  constructor(
+    canvasEl: HTMLCanvasElement,
+    emitter: Phaser.Events.EventEmitter
+  ) {
     this.game = new Phaser.Game({
       canvas: canvasEl,
       type: Phaser.CANVAS,
@@ -148,7 +159,7 @@ class Game {
           debug: true,
         },
       },
-      scene: new GameScene(),
+      scene: new GameScene(emitter),
     })
   }
 }
@@ -156,16 +167,27 @@ class Game {
 export default defineComponent({
   name: 'Game',
   setup() {
+    const eventEmitter = new Phaser.Events.EventEmitter()
+    const score = ref(0)
     const canvasRef = ref()
+
     onMounted(() => {
-      new Game(canvasRef.value as HTMLCanvasElement)
+      new Game(canvasRef.value as HTMLCanvasElement, eventEmitter)
+    })
+
+    eventEmitter.on(GameEvent.incrementScore, () => {
+      score.value++
     })
 
     return {
+      score,
       canvasRef,
     }
   },
 })
 </script>
 
-<template><canvas ref="canvasRef" /></template>
+<template>
+  <h1>Minerals harvested: {{ score }}</h1>
+  <canvas ref="canvasRef" />
+</template>
