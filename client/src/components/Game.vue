@@ -22,9 +22,9 @@ class GameScene extends Phaser.Scene {
   private botTarget: Phaser.Math.Vector2 | null = null
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null
   private minerals: Phaser.Physics.Arcade.StaticGroup | null = null
-  private emitter
+  private emitter: Phaser.Events.EventEmitter
 
-  constructor(emitter) {
+  constructor(emitter: Phaser.Events.EventEmitter) {
     super(sceneConfig)
 
     this.emitter = emitter
@@ -86,7 +86,8 @@ class GameScene extends Phaser.Scene {
       const x = Phaser.Math.Between(0, SIZE / CELL) * CELL + CELL / 2
       const y = Phaser.Math.Between(0, SIZE / CELL) * CELL + CELL / 2
 
-      mineralPatch
+      const mineralPatchImage = mineralPatch as Phaser.Physics.Arcade.Image
+      mineralPatchImage
         .setPosition(x, y)
         .setScale(IMAGE_SCALE)
         .setBodySize(CELL / 4, CELL / 4, true)
@@ -98,8 +99,10 @@ class GameScene extends Phaser.Scene {
     bot: Phaser.GameObjects.GameObject,
     mineralPatch: Phaser.GameObjects.GameObject
   ) {
-    this.minerals?.killAndHide(mineralPatch)
-    mineralPatch.body.enable = false
+    const mineralPatchImage = mineralPatch as Phaser.Physics.Arcade.Image
+    this.minerals?.killAndHide(mineralPatchImage)
+    mineralPatchImage.body.enable = false
+
     this.emitter.emit(GameEvent.incrementScore)
   }
 
