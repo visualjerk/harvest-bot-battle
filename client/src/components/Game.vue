@@ -1,4 +1,5 @@
 <script lang="ts">
+import Metric from './Metric.vue'
 import { defineComponent, onMounted, ref } from 'vue'
 import Phaser from 'phaser'
 
@@ -8,6 +9,7 @@ const CENTER = SIZE / 2
 const IMAGE_SCALE = 0.5
 
 enum GameEvent {
+  incrementMoves = 'incrementMoves',
   incrementScore = 'incrementScore',
 }
 
@@ -129,15 +131,19 @@ class GameScene extends Phaser.Scene {
     if (this.cursors?.up.isDown) {
       this.botTarget.y -= CELL
       this.bot.setRotation(0)
+      this.emitter.emit(GameEvent.incrementMoves)
     } else if (this.cursors?.down.isDown) {
       this.botTarget.y += CELL
       this.bot.setRotation(Math.PI)
+      this.emitter.emit(GameEvent.incrementMoves)
     } else if (this.cursors?.right.isDown) {
       this.botTarget.x += CELL
       this.bot.setRotation(Math.PI * 0.5)
+      this.emitter.emit(GameEvent.incrementMoves)
     } else if (this.cursors?.left.isDown) {
       this.botTarget.x -= CELL
       this.bot.setRotation(Math.PI * 1.5)
+      this.emitter.emit(GameEvent.incrementMoves)
     }
 
     this.physics.moveToObject(this.bot, this.botTarget, CELL * 2)
@@ -169,8 +175,12 @@ class Game {
 
 export default defineComponent({
   name: 'Game',
+  components: {
+    Metric,
+  },
   setup() {
     const eventEmitter = new Phaser.Events.EventEmitter()
+    const moves = ref(0)
     const score = ref(0)
     const canvasRef = ref()
 
@@ -178,11 +188,15 @@ export default defineComponent({
       new Game(canvasRef.value as HTMLCanvasElement, eventEmitter)
     })
 
+    eventEmitter.on(GameEvent.incrementMoves, () => {
+      moves.value++
+    })
     eventEmitter.on(GameEvent.incrementScore, () => {
       score.value++
     })
 
     return {
+      moves,
       score,
       canvasRef,
     }
@@ -191,13 +205,13 @@ export default defineComponent({
 </script>
 
 <template>
-  <div class="flex h-screen items-center justify-center bg-gray-900">
+  <div class="flex h-screen items-center justify-center bg-gray-900 font-mono">
     <div>
-      <canvas ref="canvasRef" class="border-4 border-gray-200 mb-2" />
-      <h1 class="text-blue-300 text-lg">
-        Minerals harvested:
-        <span class="font-bold text-blue-200">{{ score }}</span>
-      </h1>
+      <canvas ref="canvasRef" class="border-4 border-gray-200 mb-4" />
+      <div class="flex gap-3">
+        <Metric label="Moves made" :value="moves" />
+        <Metric label="Minerals harvested" :value="score" />
+      </div>
     </div>
   </div>
 </template>
