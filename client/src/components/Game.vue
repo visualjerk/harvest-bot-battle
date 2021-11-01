@@ -132,17 +132,19 @@ class GameScene extends Phaser.Scene {
 
     if (this.cursors?.up.isDown) {
       this.botTarget.y -= CELL
-      this.physics.moveToObject(this.bot, this.botTarget, CELL)
+      this.bot.setRotation(0)
     } else if (this.cursors?.down.isDown) {
       this.botTarget.y += CELL
-      this.physics.moveToObject(this.bot, this.botTarget, CELL)
+      this.bot.setRotation(Math.PI)
     } else if (this.cursors?.right.isDown) {
       this.botTarget.x += CELL
-      this.physics.moveToObject(this.bot, this.botTarget, CELL)
+      this.bot.setRotation(Math.PI * 0.5)
     } else if (this.cursors?.left.isDown) {
       this.botTarget.x -= CELL
-      this.physics.moveToObject(this.bot, this.botTarget, CELL)
+      this.bot.setRotation(Math.PI * 1.5)
     }
+
+    this.physics.moveToObject(this.bot, this.botTarget, CELL)
   }
 }
 
